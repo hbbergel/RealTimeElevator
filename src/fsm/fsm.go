@@ -8,7 +8,7 @@ import "time"
 
 
 
-func fsm_run_elev(newOrder <-chan types.Button, floorReached <-chan int, orderDone chan<- types.Button, local_state chan<- types.ElevState) {
+func Fsm_run_elev(newOrder <-chan types.Button, floorReached <-chan int, orderDone chan<- types.Button, local_state chan<- types.ElevState) {
 
 	doorTime := time.NewTimer(3*time.Second)
 
@@ -18,6 +18,8 @@ func fsm_run_elev(newOrder <-chan types.Button, floorReached <-chan int, orderDo
 		State: types.IDLE,
 		Orders: [types.N_FLOORS][types.N_BUTTONS] int {},
 	}
+    
+    local_state <- e
 
 
 
