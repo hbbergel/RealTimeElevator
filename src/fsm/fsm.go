@@ -65,14 +65,15 @@ func Fsm_run_elev(newOrder <-chan types.Button, floorReached <-chan int, orderDo
 			}
 		
 		case floorReached := <- floorReached:
-			fmt.Println("Etasje!!!!")
 			elevio.SetFloorIndicator(floorReached)
 			switch e.State {
 			
 			case types.MOVING:
 				if ShouldStop(e) {
+					fmt.Println("Etasje!!!!")
 					elevio.SetMotorDirection(0)
 					ClearAtCurrentFloor(e, func(btn int){ orderDone <- types.Button{e.Floor, btn}})
+					fmt.Printf("Matrix,\n\t%+v\n", e.Orders)
 					e.State = types.DOOR_OPEN					
 					doorTime.Reset(3*time.Second)
 					elevio.SetDoorOpenLamp(true)
