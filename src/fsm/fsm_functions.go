@@ -101,6 +101,10 @@ func ClearAtCurrentFloor(e types.ElevState, onClearedOrder func(btnType int)) {
 	}
 }
 
+func ClearOrderAtFloor(e ElevState) {
+    switch(e.config.clearRequestVariant)
+}
+
 func InitElev(){
     elevio.SetDoorOpenLamp(false)
 }
