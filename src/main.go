@@ -63,7 +63,7 @@ func main(){
 	localState := make(chan types.ElevState)
 	allStates := make(chan map[string]types.ElevState)
 	
-	newOrder := make(chan types.Button)
+	newOrder := make(chan types.Button, 1000)
 	orderDone := make(chan types.Button)
 	assignedOrder := make(chan types.Order)
 

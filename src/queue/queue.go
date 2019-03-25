@@ -30,17 +30,19 @@ func Distributor(localID string, assignedOrder <-chan types.Order, localOrder ch
 		case a := <- assignedOrder:
 			ticker := time.NewTicker(100*time.Millisecond)
 			
-			for{
-				select{
-				case <- ticker.C:
-					fmt.Println("Ticker")
-					netSend <- a
+			go func() { 
+				for{
+					select{
+					case <- ticker.C:
+						netSend <- a
+					}
 				}
-			}
+			}()
 
 
 			if a.AssignedTo == localID {
 				localOrder <- types.Button{Floor:a.Floor, Type:int(a.Button)}
+				fmt.Println("Ticker")
 			}
 
 			fmt.Printf("Local assigned: %+v\n", a)
