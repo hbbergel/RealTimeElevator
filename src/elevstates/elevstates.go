@@ -30,7 +30,7 @@ func ElevStates(local_id string, local_state <-chan types.ElevState, all_states 
         select{
 		case a := <- local_state:
 			if a != states[local_id] {
-				fmt.Printf("[ElevState]: Recieved new local state:\n\t%t+v\n", a)
+				fmt.Printf("[ElevState]: Recieved new local state:\n\t%+v\n", a)
 				states[local_id] = a
 				all_states <- states
 			}

@@ -5,6 +5,7 @@ import "../elevio"
 import "../types"
 import "../fsm"
 import "math"
+import "fmt"
 
 type ElevQueue struct {
 	QueueSystem [4][4]int
@@ -31,16 +32,20 @@ func Distributor(localID string, assignedOrder <-chan types.Order, localOrder ch
 			if a.AssignedTo == localID {
 				localOrder <- types.Button{Floor:a.Floor, Type:int(a.Button)}
 			}
+
+			fmt.Printf("Local assigned: %+v\n", a)
 		case a := <- netRecv:
 			if a.AssignedTo == localID {
 				localOrder <- types.Button{Floor:a.Floor, Type:int(a.Button)}
 			}
+
+			fmt.Printf("Received: %+v\n", a)
 		}
 	}
 
 }
 
-func Assigner(localID string, buttonPressed <-chan elevio.ButtonEvent, allStates <-chan map[string]types.ElevState, peerList <-chan []string, assignedOrder_netTx chan<- types.Order){
+func Assigner(localID string, buttonPressed <-chan elevio.ButtonEvent, allStates <-chan map[string]types.ElevState, peerList <-chan []string, assignedOrder chan types.Order){
 	var peers []string
 	var states map[string]types.ElevState
 	
@@ -59,7 +64,12 @@ func Assigner(localID string, buttonPressed <-chan elevio.ButtonEvent, allStates
 				}
 			}
 			bestID := findBest(a, aliveStates, localID)
-			assignedOrder_netTx <- types.Order{a.Floor, a.Button, bestID}
+			fmt.Println(bestID)
+			 
+			b := types.Order{a.Floor, a.Button, bestID}
+			fmt.Printf("Assigned order: %+v\n", b)
+			assignedOrder <- b
+
 		}
 	}
 }
@@ -103,7 +113,7 @@ func timeToIdle(state types.ElevState) int {
 
     for {
         if(fsm.ShouldStop(state)){
-            fsm.ClearAtCurrentFloor(state, nil)
+            fsm.ClearAtCurrentFloor(state)
             duration += doorOpenTime
             state.Direction = fsm.ChooseDirection(state)
             if(state.Direction == elevio.MD_Stop){

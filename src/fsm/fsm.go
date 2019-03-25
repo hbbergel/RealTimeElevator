@@ -13,7 +13,7 @@ func Fsm_run_elev(newOrder <-chan types.Button, floorReached <-chan int, orderDo
 	
 	
 	elevio.SetMotorDirection(elevio.MD_Up)
-
+	elevio.SetStopLamp(false)
 	e := types.ElevState{
 		Floor: 0,
 		Direction: elevio.MD_Up,
@@ -30,6 +30,8 @@ func Fsm_run_elev(newOrder <-chan types.Button, floorReached <-chan int, orderDo
 	for{
 		select{
 		case newOrder := <- newOrder:
+
+			e.Orders[newOrder.Floor][newOrder.Type] = 1
 
 			switch e.State {
 			case types.IDLE:
@@ -60,13 +62,13 @@ func Fsm_run_elev(newOrder <-chan types.Button, floorReached <-chan int, orderDo
 			}
 		
 		case floorReached := <- floorReached:
-			
+			fmt.Println("Etasje!!!!")
 			elevio.SetFloorIndicator(floorReached)
 			switch e.State {
 			
 			case types.MOVING:
 				if ShouldStop(e) {
-					ClearAtCurrentFloor(e, func(btn int){ orderDone <- types.Button{e.Floor, btn}})
+					ClearAtCurrentFloor(e)  //, func(btn int){ orderDone <- types.Button{e.Floor, btn}})
 					e.State = types.DOOR_OPEN
 					elevio.SetMotorDirection(0)
 					doorTime.Reset(3*time.Second)

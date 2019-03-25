@@ -6,7 +6,7 @@ import "fmt"
 import "os"
 import "reflect"
 
-import "./bcast"
+// import "./bcast"
 import "./elevio"
 import "./elevstates"
 import "./fsm"
@@ -41,11 +41,11 @@ func main(){
 		driver_port = "15657"
 	}
 
-	fmt.Printf(localip.LocalIP())
-	
+	fmt.Println(localip.LocalIP())
+
 	elevio.Init("localhost:"+driver_port, numFloors)
 	fsm.InitElev()
-	fmt.Printf("Stoplys av")
+	fmt.Println("Stoplys av")
 
 	// Channels
 
@@ -53,8 +53,8 @@ func main(){
 	peerTxEnable := make(chan bool)
 	peerList := make(chan []string)
 
-	assignedOrder_netTx := make(chan types.Order)
-	assignedOrder_netRx := make(chan types.Order)
+	// assignedOrder_netTx := make(chan types.Order)
+	// assignedOrder_netRx := make(chan types.Order)
 
 	drv_buttons := make(chan elevio.ButtonEvent)
 	drv_floors  := make(chan int)
@@ -75,11 +75,11 @@ func main(){
 
 	//Goroutines
 
-	go peers.Transmitter(15647, id, peerTxEnable)
-	go peers.Receiver(15647, peerUpdateCh)
+	go peers.Transmitter(20001, id, peerTxEnable)
+	go peers.Receiver(20001, peerUpdateCh)
 
-	go bcast.Transmitter(15002, assignedOrder_netTx)
-	go bcast.Receiver(15002, assignedOrder_netRx)
+	// go bcast.Transmitter(15001, assignedOrder_netTx)
+	// go bcast.Receiver(15001, assignedOrder_netRx)
 
 	go elevio.PollButtons(drv_buttons)
 	go elevio.PollFloorSensor(drv_floors)

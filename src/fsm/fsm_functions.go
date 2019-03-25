@@ -3,6 +3,7 @@ package fsm
 
 import "../elevio"
 import "../types"
+import "runtime"
 
 
 func ChooseDirection(e types.ElevState)elevio.MotorDirection{ 
@@ -80,16 +81,16 @@ func ShouldStop(e types.ElevState) bool {
     }
 }
 
-func ClearAtCurrentFloor(e types.ElevState, onClearedOrder func(btnType int)) {
+func ClearAtCurrentFloor(e types.ElevState){ //, onClearedOrder func(btnType int)) {
 	for btn := 0; btn <= 2; btn++ {
 		if e.Orders[e.Floor][btn] == 2 {
 			e.Orders[e.Floor][btn] = 0
-			onClearedOrder(btn)
+            // onClearedOrder(btn)
+            runtime.Goexit()
 		}
 	}
 }
 
 func InitElev(){
-    elevio.SetStopLamp(false)
     elevio.SetDoorOpenLamp(false)
 }

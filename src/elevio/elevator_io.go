@@ -48,7 +48,7 @@ func Init(addr string, numFloors int) {
 	_numFloors = numFloors
 	_mtx = sync.Mutex{}
 	var err error
-	_conn, err = net.Dial("udp", addr)
+	_conn, err = net.Dial("tcp", addr)
 	if err != nil {
 		panic(err.Error())
 	}
