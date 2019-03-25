@@ -6,6 +6,7 @@ import "../types"
 import "../fsm"
 import "math"
 import "fmt"
+import "time"
 
 type ElevQueue struct {
 	QueueSystem [4][4]int
@@ -27,7 +28,14 @@ func Distributor(localID string, assignedOrder <-chan types.Order, localOrder ch
 	for{
 		select{
 		case a := <- assignedOrder:
-			netSend <- a
+			ticker := time.NewTicker(100*time.Millisecond)
+			for{
+				select{
+				case <- ticker.C:
+					netSend <- a
+				}
+			}
+
 
 			if a.AssignedTo == localID {
 				localOrder <- types.Button{Floor:a.Floor, Type:int(a.Button)}
@@ -35,6 +43,7 @@ func Distributor(localID string, assignedOrder <-chan types.Order, localOrder ch
 
 			fmt.Printf("Local assigned: %+v\n", a)
 		case a := <- netRecv:
+			elevio.SetButtonLamp(a.Button, a.Floor, true)
 			if a.AssignedTo == localID {
 				localOrder <- types.Button{Floor:a.Floor, Type:int(a.Button)}
 			}
