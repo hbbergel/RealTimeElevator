@@ -67,23 +67,33 @@ func requests_below(e types.ElevState) bool{
 func ShouldStop(e types.ElevState) bool {
     switch (e.Direction){
     case elevio.MD_Down:
-        if e.Orders[e.Floor][elevio.BT_HallDown] == 1 {
+        if e.Orders[e.Floor][0] == 1 {
             return true
-        } else if e.Orders[e.Floor][elevio.BT_Cab] == 1 {
+        } else if e.Orders[e.Floor][2] == 1 {
             return true
         } else if !requests_below(e) {
+            return true
+        } else if e.Floor == 0  {
             return true
         } else {
             return false
         }
     case elevio.MD_Up:
-        if e.Orders[e.Floor][elevio.BT_HallUp] == 1 {
+        if e.Orders[e.Floor][1] == 1 {
             return true
-        } else if e.Orders[e.Floor][elevio.BT_Cab] == 1 {
+        } else if e.Orders[e.Floor][2] == 1 {
             return true
         } else if !requests_above(e) {
             return true
-        } else {
+        } else if e.Floor == 3  {
+            return true
+        }else {
+            return false
+        }
+    case elevio.MD_Stop:
+        if ((e.Orders[e.Floor][0] == 1) || (e.Orders[e.Floor][1] == 1) || (e.Orders[e.Floor][2] == 1)){
+            return true
+        } else{
             return false
         }
     
@@ -91,6 +101,7 @@ func ShouldStop(e types.ElevState) bool {
         return true
     }
 }
+
 
 func ClearAtCurrentFloor(e types.ElevState, onClearedOrder func(btnType int)) {
 	for btn := 0; btn <= 2; btn++ {
@@ -101,10 +112,23 @@ func ClearAtCurrentFloor(e types.ElevState, onClearedOrder func(btnType int)) {
 	}
 }
 
-func ClearOrderAtFloor(e ElevState) {
-    switch(e.config.clearRequestVariant)
+/*
+func ClearAtCurrentFloor(e types.ElevState) {
+    switch(e.Direction){
+    case elevio.MD_Down:
+        if (e.Orders[e.Floor][0] == 1) || (e.Orders[e.Floor][2] == 1){
+            e.Orders[e.Floor][0] = 0
+            e.Orders[e.Floor][2] = 0
+            elevio.SetButtonLamp(0, e.Floor, false)
+            elevio.SetButtonLamp(2, e.Floor, false)
+        }
+    case elevio.MD_Up:
+        if (e.Orders[e.Floor][1] == 1) || (e.Orders[e.Floor][2] == 1){
+            e.Orders[e.Floor][1] = 0
+            e.Orders[e.Floor][2] = 0
+            elevio.SetButtonLamp(1, e.Floor, false)
+            elevio.SetButtonLamp(2, e.Floor, false)
+        }
+    }
 }
-
-func InitElev(){
-    elevio.SetDoorOpenLamp(false)
-}
+*/

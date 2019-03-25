@@ -44,8 +44,7 @@ func main(){
 	fmt.Println(localip.LocalIP())
 
 	elevio.Init("localhost:"+driver_port, numFloors)
-	fsm.InitElev()
-	fmt.Println("Stoplys av")
+	//fmt.Println("Stoplys av")
 
 	// Channels
 
@@ -85,8 +84,6 @@ func main(){
 	go elevio.PollFloorSensor(drv_floors)
 
 	go elevstates.ElevStates(id, localState, allStates)
-
-
 
 	// TODO: Create lights goroutine here:
     //   Takes allStates, but this must be repeated (goes to lights and queue.Asssigner) 
