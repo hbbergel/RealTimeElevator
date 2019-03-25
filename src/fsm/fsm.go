@@ -70,6 +70,7 @@ func Fsm_run_elev(newOrder <-chan types.Button, floorReached <-chan int, orderDo
 			
 			case types.MOVING:
 				if ShouldStop(e) {
+					fmt.Printf("STOPPPPPP")
 					ClearAtCurrentFloor(e)  //, func(btn int){ orderDone <- types.Button{e.Floor, btn}})
 					e.State = types.DOOR_OPEN
 					elevio.SetMotorDirection(0)
