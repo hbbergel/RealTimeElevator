@@ -13,7 +13,7 @@ func Fsm_run_elev(newOrder <-chan types.Button, floorReached <-chan int, orderDo
 	
 	
 	elevio.SetMotorDirection(elevio.MD_Up)
-	elevio.SetStopLamp(false)
+
 	e := types.ElevState{
 		Floor: 0,
 		Direction: elevio.MD_Up,
@@ -32,6 +32,7 @@ func Fsm_run_elev(newOrder <-chan types.Button, floorReached <-chan int, orderDo
 		case newOrder := <- newOrder:
 
 			e.Orders[newOrder.Floor][newOrder.Type] = 1
+			fmt.Printf("[ElevState]: Order:\n\t%+v\n", e.Orders)
 
 			switch e.State {
 			case types.IDLE:
@@ -42,6 +43,7 @@ func Fsm_run_elev(newOrder <-chan types.Button, floorReached <-chan int, orderDo
 					local_state <- e
 
 				} else {
+					fmt.Println("Set Dir")
 					elevio.SetMotorDirection(ChooseDirection(e))
 					e.State = types.MOVING
 					local_state <- e
@@ -79,7 +81,9 @@ func Fsm_run_elev(newOrder <-chan types.Button, floorReached <-chan int, orderDo
 			case types.INIT:
 				elevio.SetMotorDirection(0)
 				e.State = types.IDLE
+				e.Floor = floorReached
 				local_state <- e
+				fmt.Println("Initialisert")
 			}
 		case <- doorTime.C:
 			

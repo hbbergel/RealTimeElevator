@@ -29,9 +29,11 @@ func Distributor(localID string, assignedOrder <-chan types.Order, localOrder ch
 		select{
 		case a := <- assignedOrder:
 			ticker := time.NewTicker(100*time.Millisecond)
+			
 			for{
 				select{
 				case <- ticker.C:
+					fmt.Println("Ticker")
 					netSend <- a
 				}
 			}
