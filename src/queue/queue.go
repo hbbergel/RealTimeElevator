@@ -52,7 +52,7 @@ func Distributor(localID string, assignedOrder <-chan types.Order, localOrder ch
 				localOrder <- types.Button{Floor:a.Floor, Type:int(a.Button)}
 			}
 
-			fmt.Printf("Received: %+v\n", a)
+			
 		}
 	}
 
