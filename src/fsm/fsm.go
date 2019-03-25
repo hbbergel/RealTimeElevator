@@ -32,7 +32,7 @@ func Fsm_run_elev(newOrder <-chan types.Button, floorReached <-chan int, orderDo
 		case newOrder := <- newOrder:
 
 			e.Orders[newOrder.Floor][newOrder.Type] = 1
-			fmt.Printf("[ElevState]: Order:\n\t%+v\n", e.Orders)
+			//fmt.Printf("[ElevState]: Order:\n\t%+v\n", e.Orders)
 
 			switch e.State {
 			case types.IDLE:

@@ -68,13 +68,25 @@ func requests_below(e types.ElevState) bool{
 func ShouldStop(e types.ElevState) bool {
     switch (e.Direction){
     case elevio.MD_Down:
-        return ((e.Orders[e.Floor][elevio.BT_HallDown] == 1 )||
-            (e.Orders[e.Floor][elevio.BT_Cab] == 1)) ||
-            !requests_below(e)
+        if e.Orders[e.Floor][elevio.BT_HallDown] == 1 {
+            return true
+        } else if e.Orders[e.Floor][elevio.BT_Cab] == 1 {
+            return true
+        } else if !requests_below(e) {
+            return true
+        } else {
+            return false
+        }
     case elevio.MD_Up:
-        return ((e.Orders[e.Floor][elevio.BT_HallUp] == 1) ||
-            (e.Orders[e.Floor][elevio.BT_Cab] == 1 ))||
-            !requests_above(e)
+        if e.Orders[e.Floor][elevio.BT_HallUp] == 1 {
+            return true
+        } else if e.Orders[e.Floor][elevio.BT_Cab] == 1 {
+            return true
+        } else if !requests_above(e) {
+            return true
+        } else {
+            return false
+        }
     
     default:
         return true
