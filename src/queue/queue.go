@@ -126,7 +126,7 @@ func timeToIdle(state types.ElevState) int {
 
     for {
         if(fsm.ShouldStop(state)){
-            fsm.ClearAtCurrentFloor(state, NULL)
+            fsm.ClearAtCurrentFloor(state, nil)
             duration += doorOpenTime
             state.Direction = fsm.ChooseDirection(state)
             if(state.Direction == elevio.MD_Stop){
