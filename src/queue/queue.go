@@ -1,5 +1,6 @@
 package queue
 
+import "../bcast"
 import "../elevio"	
 import "../types"
 import "../fsm"
@@ -15,15 +16,50 @@ type ElevQueue struct {
 
 
 
-func Assigner(local_id string, buttonPressed <-chan elevio.ButtonEvent, all_states <-chan map[string]types.ElevState, peerList <-chan []string, assignedOrder_netTx chan<- types.Order){
+func Distributor(localID string, assignedOrder <-chan types.Order, localOrder chan<- types.Button) {
+	netSend := make(chan types.Order)
+	netRecv := make(chan types.Order)
+	go bcast.Transmitter(15002, netSend)
+	go bcast.Receiver(15002, netRecv)
+
+
 	for{
 		select{
-		case a := <- buttonPressed:
-			states := <-all_states
+		case a := <- assignedOrder:
+			netSend <- a
 
-			// TODO: filter out dead peers via peerList
-			bestID := findBest(a, states, local_id)
-			assignedOrder_netTx <- types.Order{a.Floor, a.Button, bestID}		
+			if a.AssignedTo == localID {
+				localOrder <- types.Button{Floor:a.Floor, Type:int(a.Button)}
+			}
+		case a := <- netRecv:
+			if a.AssignedTo == localID {
+				localOrder <- types.Button{Floor:a.Floor, Type:int(a.Button)}
+			}
+		}
+	}
+
+}
+
+func Assigner(localID string, buttonPressed <-chan elevio.ButtonEvent, allStates <-chan map[string]types.ElevState, peerList <-chan []string, assignedOrder_netTx chan<- types.Order){
+	var peers []string
+	var states map[string]types.ElevState
+	
+	for{
+		select{
+		case peers = <- peerList:
+		
+		case states = <- allStates:
+
+		case a := <- buttonPressed:
+			aliveStates := make(map[string]types.ElevState)
+
+			for _, id := range(peers) {
+				if state, ok := states[id]; ok {
+					aliveStates[id] = state
+				}
+			}
+			bestID := findBest(a, aliveStates, localID)
+			assignedOrder_netTx <- types.Order{a.Floor, a.Button, bestID}
 		}
 	}
 }
@@ -55,11 +91,11 @@ func timeToIdle(state types.ElevState) int {
         if(state.Direction == elevio.MD_Stop){
             return duration;
         }
-        break
+        
     case types.MOVING:
         duration += travelTime/2
         state.Floor += convertDirToInt(state)
-        break
+        
     case types.DOOR_OPEN:
         duration -= doorOpenTime/2
     }

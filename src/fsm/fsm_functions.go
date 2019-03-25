@@ -89,3 +89,7 @@ func ClearAtCurrentFloor(e types.ElevState, onClearedOrder func(btnType int)) {
 	}
 }
 
+func InitElev(){
+    elevio.SetStopLamp(false)
+    elevio.SetDoorOpenLamp(false)
+}

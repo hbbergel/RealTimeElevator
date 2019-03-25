@@ -3,24 +3,30 @@ package fsm
 import "../elevio"
 import "../types"
 import "time"
+import "fmt"
 
 
 
 
 
-func fsm_run_elev(newOrder <-chan types.Button, floorReached <-chan int, orderDone chan<- types.Button, local_state chan<- types.ElevState) {
-
-	doorTime := time.NewTimer(3*time.Second)
+func Fsm_run_elev(newOrder <-chan types.Button, floorReached <-chan int, orderDone chan<- types.Button, local_state chan<- types.ElevState) {
+	
+	
+	elevio.SetMotorDirection(elevio.MD_Up)
 
 	e := types.ElevState{
-		Floor: <-floorReached,
-		Direction: elevio.MD_Stop,
-		State: types.IDLE,
-		Orders: [types.N_FLOORS][types.N_BUTTONS] int {},
+		Floor: 0,
+		Direction: elevio.MD_Up,
+		State: types.INIT,
+		Orders: [types.N_FLOORS][types.N_BUTTONS]int {},
 	}
+	
+	doorTime := time.NewTimer(3*time.Second)
 
 
-
+	local_state <- e
+	fmt.Printf("Fsm has started")
+	
 	for{
 		select{
 		case newOrder := <- newOrder:
@@ -53,8 +59,9 @@ func fsm_run_elev(newOrder <-chan types.Button, floorReached <-chan int, orderDo
 				
 			}
 		
-		case <- floorReached:
-
+		case floorReached := <- floorReached:
+			
+			elevio.SetFloorIndicator(floorReached)
 			switch e.State {
 			
 			case types.MOVING:
@@ -84,6 +91,7 @@ func fsm_run_elev(newOrder <-chan types.Button, floorReached <-chan int, orderDo
 		
 		}
 	}
+	
 
 }
 
