@@ -6,7 +6,7 @@ import "../types"
 import "../fsm"
 import "math"
 import "fmt"
-import "time"
+//import "time"
 
 type ElevQueue struct {
 	QueueSystem [4][4]int
@@ -28,16 +28,17 @@ func Distributor(localID string, assignedOrder <-chan types.Order, localOrder ch
 	for{
 		select{
 		case a := <- assignedOrder:
-			ticker := time.NewTicker(100*time.Millisecond)
+			netSend <- a
+			//ticker := time.NewTicker(100*time.Millisecond)
 			
-			go func() { 
+			/*go func() { 
 				for{
 					select{
 					case <- ticker.C:
 						netSend <- a
 					}
 				}
-			}()
+			}()*/
 
 
 			if a.AssignedTo == localID {
@@ -126,7 +127,7 @@ func timeToIdle(state types.ElevState) int {
 
     for {
         if(fsm.ShouldStop(state)){
-            fsm.ClearAtCurrentFloor(state, nil)
+            //fsm.ClearAtCurrentFloor(state, nil)
             duration += doorOpenTime
             state.Direction = fsm.ChooseDirection(state)
             if(state.Direction == elevio.MD_Stop){

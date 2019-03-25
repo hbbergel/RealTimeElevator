@@ -3,6 +3,7 @@ package fsm
 
 import "../elevio"
 import "../types"
+import "fmt"
 
 
 func ChooseDirection(e types.ElevState)elevio.MotorDirection{ 
@@ -103,32 +104,13 @@ func ShouldStop(e types.ElevState) bool {
 }
 
 
-func ClearAtCurrentFloor(e types.ElevState, onClearedOrder func(btnType int)) {
+func ClearAtCurrentFloor(e types.ElevState, onClearedOrder func(btnType int)) types.ElevState{
 	for btn := 0; btn <= 2; btn++ {
 		if e.Orders[e.Floor][btn] == 1 {
 			e.Orders[e.Floor][btn] = 0
             onClearedOrder(btn)
 		}
-	}
-}
-
-/*
-func ClearAtCurrentFloor(e types.ElevState) {
-    switch(e.Direction){
-    case elevio.MD_Down:
-        if (e.Orders[e.Floor][0] == 1) || (e.Orders[e.Floor][2] == 1){
-            e.Orders[e.Floor][0] = 0
-            e.Orders[e.Floor][2] = 0
-            elevio.SetButtonLamp(0, e.Floor, false)
-            elevio.SetButtonLamp(2, e.Floor, false)
-        }
-    case elevio.MD_Up:
-        if (e.Orders[e.Floor][1] == 1) || (e.Orders[e.Floor][2] == 1){
-            e.Orders[e.Floor][1] = 0
-            e.Orders[e.Floor][2] = 0
-            elevio.SetButtonLamp(1, e.Floor, false)
-            elevio.SetButtonLamp(2, e.Floor, false)
-        }
     }
+    fmt.Printf("Matrix in fsm,\n\t%+v\n", e.Orders)
+    return e
 }
-*/

@@ -9,7 +9,7 @@ import "fmt"
 
 
 
-func Fsm_run_elev(newOrder <-chan types.Button, floorReached <-chan int, orderDone chan<- types.Button, local_state chan<- types.ElevState) {
+func Fsm_run_elev(newOrder <-chan types.Button, floorReached <-chan int, orderDone chan types.Button, local_state chan<- types.ElevState) {
 	
 	
 	elevio.SetMotorDirection(elevio.MD_Up)
@@ -70,6 +70,7 @@ func Fsm_run_elev(newOrder <-chan types.Button, floorReached <-chan int, orderDo
 		case floorReached := <- floorReached:
 			elevio.SetFloorIndicator(floorReached)
 			e.Floor = floorReached
+			local_state <- e
 			switch e.State {
 			
 			case types.MOVING:
@@ -77,11 +78,10 @@ func Fsm_run_elev(newOrder <-chan types.Button, floorReached <-chan int, orderDo
 				if ShouldStop(e) {
 					elevio.SetMotorDirection(0)
 					fmt.Println("Etasje!!!!")
-					ClearAtCurrentFloor(e, func(btn int){ orderDone <- types.Button{e.Floor, btn}})
-					fmt.Printf("Matrix,\n\t%+v\n", e.Orders)
 					e.State = types.DOOR_OPEN	
 					elevio.SetDoorOpenLamp(true)				
 					doorTime.Reset(3*time.Second)
+					time.Sleep(3*time.Second)
 					local_state <- e
 				}
 			
@@ -99,9 +99,16 @@ func Fsm_run_elev(newOrder <-chan types.Button, floorReached <-chan int, orderDo
 			case types.DOOR_OPEN:
 				fmt.Printf("Door open")
 				elevio.SetDoorOpenLamp(false)
+				e = ClearAtCurrentFloor(e, func(btn int){ orderDone <- types.Button{e.Floor, btn}})
 				e.State = types.IDLE
+				//fmt.Printf("Matrix,\n\t%+v\n", e.Orders)
+
 				dir := ChooseDirection(e)
 				elevio.SetMotorDirection(dir)
+				if dir != elevio.MD_Stop {
+					e.State = types.MOVING
+				}
+
 				local_state <- e
 			}
 		

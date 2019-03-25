@@ -110,7 +110,17 @@ func main(){
 
 		case a := <- orderDone:
 			fmt.Printf("Order done: %+v\n", a)
+            if a.Type == 0 || a.Type == 2 {
+				elevio.SetButtonLamp(0, a.Floor, false)
+				elevio.SetButtonLamp(2, a.Floor, false)
+			} else if a.Type == 1 || a.Type == 2 {
+			elevio.SetButtonLamp(2, a.Floor, false)
+			elevio.SetButtonLamp(1, a.Floor, false)
+			}
+
 			//TODO: remove the orderDone for something useful
+
+
 
 		}
 	}
