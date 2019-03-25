@@ -97,7 +97,7 @@ func main(){
 	elevio.Init("localhost:"+driver_port, numFloors)
 
 
-	go func(assignedOrder_netRx <-chan types.Order, peerList <- []string ){
+	go func(assignedOrder_netRx <-chan types.Order, newOrder chan<- types.Order){
 		for {
 			select{
 			case order := <- assignedOrder_netRx:

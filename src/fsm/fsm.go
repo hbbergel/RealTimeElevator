@@ -30,9 +30,7 @@ func fsm_run_elev(newOrder <-chan types.Button, floorReached <-chan int, orderDo
 				if e.Direction == elevio.MD_Stop {
 					e.State = types.DOOR_OPEN
 					elevio.SetDoorOpenLamp(true)
-					time.Sleep(3*time.Second)
-					elevio.SetDoorOpenLamp(false)
-					e.State = types.IDLE
+					doorTime.Reset(3*time.Second)
 					local_state <- e
 
 				} else {
@@ -46,10 +44,8 @@ func fsm_run_elev(newOrder <-chan types.Button, floorReached <-chan int, orderDo
 			
 			case types.DOOR_OPEN:
 				if e.Floor == newOrder.Floor {
-					elevio.SetDoorOpenLamp(true)
-					time.Sleep(3*time.Second)
-					elevio.SetDoorOpenLamp(false)
-					e.State = types.IDLE
+					e.State = types.DOOR_OPEN
+					doorTime.Reset(3*time.Second)
 					local_state <- e
 
 				}
@@ -73,6 +69,7 @@ func fsm_run_elev(newOrder <-chan types.Button, floorReached <-chan int, orderDo
 			
 			case types.INIT:
 				elevio.SetMotorDirection(0)
+				e.State = types.IDLE
 				local_state <- e
 			}
 		case <- doorTime.C:
