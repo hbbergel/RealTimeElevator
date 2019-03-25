@@ -32,6 +32,7 @@ func Fsm_run_elev(newOrder <-chan types.Button, floorReached <-chan int, orderDo
 		case newOrder := <- newOrder:
 
 			e.Orders[newOrder.Floor][newOrder.Type] = 1
+			local_state <- e
 			//fmt.Printf("[ElevState]: Order:\n\t%+v\n", e.Orders)
 
 			switch e.State {
@@ -70,10 +71,9 @@ func Fsm_run_elev(newOrder <-chan types.Button, floorReached <-chan int, orderDo
 			
 			case types.MOVING:
 				if ShouldStop(e) {
-					fmt.Printf("STOPPPPPP")
-					ClearAtCurrentFloor(e)  //, func(btn int){ orderDone <- types.Button{e.Floor, btn}})
-					e.State = types.DOOR_OPEN
 					elevio.SetMotorDirection(0)
+					ClearAtCurrentFloor(e, func(btn int){ orderDone <- types.Button{e.Floor, btn}})
+					e.State = types.DOOR_OPEN					
 					doorTime.Reset(3*time.Second)
 					elevio.SetDoorOpenLamp(true)
 					local_state <- e

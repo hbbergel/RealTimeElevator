@@ -93,12 +93,11 @@ func ShouldStop(e types.ElevState) bool {
     }
 }
 
-func ClearAtCurrentFloor(e types.ElevState){ //, onClearedOrder func(btnType int)) {
+func ClearAtCurrentFloor(e types.ElevState, onClearedOrder func(btnType int)) {
 	for btn := 0; btn <= 2; btn++ {
-		if e.Orders[e.Floor][btn] == 2 {
+		if e.Orders[e.Floor][btn] == 1 {
 			e.Orders[e.Floor][btn] = 0
-            // onClearedOrder(btn)
-            runtime.Goexit()
+            onClearedOrder(btn)
 		}
 	}
 }
