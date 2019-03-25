@@ -3,7 +3,6 @@ package fsm
 
 import "../elevio"
 import "../types"
-import "runtime"
 
 
 func ChooseDirection(e types.ElevState)elevio.MotorDirection{ 
