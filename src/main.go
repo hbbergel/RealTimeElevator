@@ -112,7 +112,6 @@ func main(){
 	go queue.Distributor(id, assignedOrder, newOrder)
 
 	go fsm.Fsm_run_elev(newOrder, drv_floors, orderDone, localState)
-	go fsm.Fsm_Init(id, localState, allStatesRx, peerList)
 
 
 	//go ReInitializing()
@@ -120,7 +119,6 @@ func main(){
     
     
     for {
-        select {		
             
 		case p := <-peerUpdateCh:
 			fmt.Printf("Peer update:\n")
