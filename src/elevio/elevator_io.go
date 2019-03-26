@@ -54,6 +54,12 @@ func Init(addr string, numFloors int) {
 	}
 	_initialized = true
 	
+    for f := 0; f < _numFloors; f++ {
+        for b := ButtonType(0); b < 3; b++ {
+            SetButtonLamp(b, f, false)
+        }
+    }
+    
 }
 
 
