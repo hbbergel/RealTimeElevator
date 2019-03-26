@@ -70,6 +70,7 @@ func main(){
 	allStates               := make(chan map[string]types.ElevState)
 	allStatesToAssigner     := make(chan map[string]types.ElevState)
 	allStatesToLostPeers    := make(chan map[string]types.ElevState)
+	localStateToFsm			:= make(chan types.ElevState)
 	
 	newOrder := make(chan types.Button, 5000)
 	orderDone := make(chan types.Button)
@@ -106,11 +107,13 @@ func main(){
     //   Sets all lights: hall for all elevs, cab for us 
 
     go Repeater(peerUpdateCh, nil, peerUpdateToLostPeers, peerUpdateToAssigner)
-    go Repeater(allStates, nil, allStatesToLostPeers, allStatesToAssigner)
+	go Repeater(allStates, nil, allStatesToLostPeers, allStatesToAssigner)
+	go Repeater(localState, nil, localStateToFsm)
     
 	go queue.Assigner(id, drv_buttons, allStatesToAssigner, peerUpdateToAssigner, assignedOrder)
 	go queue.LostPeers(peerUpdateToLostPeers, allStatesToLostPeers, newOrder)
 	go queue.Distributor(id, assignedOrder, newOrder)
+	go fsm.WriteCabOrdersToFile(localStateToFsm)
 
 	go fsm.Fsm_run_elev(newOrder, drv_floors, orderDone, localState)
 

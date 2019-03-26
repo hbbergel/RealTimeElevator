@@ -4,27 +4,45 @@ import "../elevio"
 import "../types"
 import "time"
 import "fmt"
+import "encoding/json"
+import "io/ioutil"
+
 
 
 
 
 
 func Fsm_run_elev(newOrder <-chan types.Button, floorReached <-chan int, orderDone chan types.Button, local_state chan types.ElevState) {
+
 	
+
 	e := types.ElevState{}
-    {
-        f := elevio.GetFloor()
-        if f == -1 {
-            e.Floor     = 0
-            e.Direction = elevio.MD_Down
-            e.State     = types.MOVING
-            elevio.SetMotorDirection(elevio.MD_Down)
-        } else {
-            e.Floor     = f
-            e.Direction = elevio.MD_Stop
-            e.State     = types.IDLE
-        }
-    }
+	{
+		f := elevio.GetFloor()
+		if f == -1 {
+			e.Floor     = 0
+			e.Direction = elevio.MD_Down
+			e.State     = types.MOVING
+			elevio.SetMotorDirection(elevio.MD_Down)
+		} else {
+			e.Floor     = f
+			e.Direction = elevio.MD_Stop
+			e.State     = types.IDLE
+		}
+	}
+	
+	
+	var cabOrders [4]bool
+	str, _ := ioutil.ReadFile("cabOrderBackup.json")		
+	fmt.Printf("Reading from file")
+	json.Unmarshal(str, &cabOrders)
+	for f := 0; f < 4; f++ {
+		if cabOrders[f] {
+			e.Orders[f][2] = 1
+			elevio.SetButtonLamp(2, f, true)
+			e.State = types.INIT
+		}
+	}
 
 	doorTime := time.NewTimer(3*time.Second)
 	doorTime.Stop()
@@ -76,7 +94,7 @@ func Fsm_run_elev(newOrder <-chan types.Button, floorReached <-chan int, orderDo
 			}
 		
 		case floorReached := <- floorReached:
-			fmt.Println("IKKE INIIT")
+			fmt.Println("Floor Arrival")
 			elevio.SetFloorIndicator(floorReached)
 			e.Floor = floorReached
 			local_state <- e
@@ -94,7 +112,7 @@ func Fsm_run_elev(newOrder <-chan types.Button, floorReached <-chan int, orderDo
 					//time.Sleep(3*time.Second)
 					local_state <- e
 				}
-			
+			case types.IDLE:
 			case types.INIT:
 				elevio.SetMotorDirection(0)
 				e.State = types.IDLE
@@ -121,6 +139,22 @@ func Fsm_run_elev(newOrder <-chan types.Button, floorReached <-chan int, orderDo
 				local_state <- e
 			}
 		}
+	}
+}
+
+func WriteCabOrdersToFile(localStateToFsm <-chan types.ElevState) {
+	for{
+		fmt.Printf("in for-loop")
+		state := <- localStateToFsm
+		var cabOrders [4]bool
+		for f := 0; f < 4; f++ {
+			if state.Orders[f][2] != 0 {
+				cabOrders[f] = true
+			}
+		}
+		str, _ := json.Marshal(cabOrders)
+		fmt.Printf("writeing to file")
+		ioutil.WriteFile("cabOrderBackup.json", str, 0666)
 	}
 }
 
