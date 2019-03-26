@@ -69,13 +69,14 @@ func Distributor(localID string, assignedOrder <-chan types.Order, localOrder ch
 
 }
 
-func Assigner(localID string, buttonPressed <-chan elevio.ButtonEvent, allStates <-chan map[string]types.ElevState, peerList <-chan []string, assignedOrder chan types.Order){
+func Assigner(localID string, buttonPressed <-chan elevio.ButtonEvent, allStates <-chan map[string]types.ElevState, peerUpdate <-chan peers.PeerUpdate, assignedOrder chan types.Order){
 	var peers []string
 	var states map[string]types.ElevState
 
 	for{
 		select{
-		case peers = <- peerList:
+		case a := <- peerUpdate:
+            peers = a.Peers
 		
 		case states = <- allStates:
 
@@ -173,20 +174,23 @@ func closestToOrder(btn elevio.ButtonEvent, state types.ElevState) int {
 func LostPeers(peerUpdateCh <-chan peers.PeerUpdate, allStatesRx <-chan map[string]types.ElevState, newOrder chan<- types.Button) {
 	
 	var states map[string]types.ElevState
-	states = <- allStatesRx
+	
 
 	for {
 		select{
+        case states = <- allStatesRx:
+            
 		case a := <- peerUpdateCh:
 			lost_id := a.Lost
 			if len(lost_id) != 0 {
-				fmt.Printf("Lost Node")
-				for i, _ := range lost_id {
-					orders := states[lost_id[i]].Orders
-					for j := 0; j <=3; j++{
-						for k := 0; k <= 1; k++{
-							if orders[j][k] != 0 {
-								newOrder <- types.Button{Floor: j, Type: k}
+				for _, id := range lost_id {
+					orders := states[id].Orders
+                    fmt.Printf("Lost Node %v had orders: %+v\n", id, orders)
+					for f := 0; f <=3; f++ {
+						for b := 0; b <= 1; b++ {
+							if orders[f][b] != 0 {
+                                fmt.Printf("Sending newOrder %+v\n", types.Button{Floor: f, Type: b})
+								newOrder <- types.Button{Floor: f, Type: b}
 							}
 						}
 					}

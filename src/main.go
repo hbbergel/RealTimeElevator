@@ -51,15 +51,13 @@ func main(){
 
 	// Channels
 
-	peerUpdateCh := make(chan peers.PeerUpdate)
-	peerTxEnable := make(chan bool)
-	peerList := make(chan []string)
+	peerUpdateCh            := make(chan peers.PeerUpdate)
+	peerUpdateToAssigner    := make(chan peers.PeerUpdate)
+	peerUpdateToLostPeers   := make(chan peers.PeerUpdate)
+	peerTxEnable            := make(chan bool)
 
 	orderDoneTx := make(chan types.Button)
 	orderDoneRx := make(chan types.Button)
-
-	allStatesTx := make(chan map[string]types.ElevState)
-	allStatesRx := make(chan map[string]types.ElevState)
 
 	// assignedOrder_netTx := make(chan types.Order)
 	// assignedOrder_netRx := make(chan types.Order)
@@ -68,8 +66,10 @@ func main(){
 	drv_floors  := make(chan int)
 	//drv_motor_dir := make(chan elevio.MotorDirection)
 
-	localState := make(chan types.ElevState)
-	allStates := make(chan map[string]types.ElevState)
+	localState              := make(chan types.ElevState)
+	allStates               := make(chan map[string]types.ElevState)
+	allStatesToAssigner     := make(chan map[string]types.ElevState)
+	allStatesToLostPeers    := make(chan map[string]types.ElevState)
 	
 	newOrder := make(chan types.Button, 1000)
 	orderDone := make(chan types.Button)
@@ -90,8 +90,6 @@ func main(){
 	go bcast.Transmitter(15000, orderDoneTx)
 	go bcast.Receiver(15000, orderDoneRx)
 
-	go bcast.Transmitter(15050, allStatesTx)
-	go bcast.Receiver(15050, allStatesRx)
 
 
 
@@ -101,14 +99,17 @@ func main(){
 	go elevio.PollButtons(drv_buttons)
 	go elevio.PollFloorSensor(drv_floors)
 
-	go elevstates.ElevStates(id, localState, allStates, allStatesTx)
+	go elevstates.ElevStates(id, localState, allStates)
 
 	// TODO: Create lights goroutine here:
     //   Takes allStates, but this must be repeated (goes to lights and queue.Asssigner) 
     //   Sets all lights: hall for all elevs, cab for us 
 
-	go queue.Assigner(id, drv_buttons, allStates, peerList, assignedOrder)
-	go queue.LostPeers(peerUpdateCh, allStatesRx, newOrder)
+    go Repeater(peerUpdateCh, nil, peerUpdateToLostPeers, peerUpdateToAssigner)
+    go Repeater(allStates, nil, allStatesToLostPeers, allStatesToAssigner)
+    
+	go queue.Assigner(id, drv_buttons, allStatesToAssigner, peerUpdateToAssigner, assignedOrder)
+	go queue.LostPeers(peerUpdateToLostPeers, allStatesToLostPeers, newOrder)
 	go queue.Distributor(id, assignedOrder, newOrder)
 
 	go fsm.Fsm_run_elev(newOrder, drv_floors, orderDone, localState)
@@ -121,15 +122,6 @@ func main(){
     for {
         select {
             
-		case p := <-peerUpdateCh:
-			fmt.Printf("Peer update:\n")
-			fmt.Printf("  Peers:    %q\n", p.Peers)
-			fmt.Printf("  New:      %q\n", p.New)
-			fmt.Printf("  Lost:     %q\n", p.Lost)
-			
-		
-		peerList <- p.Peers
-
 		case a := <- orderDone:
 			fmt.Printf("Order done: %+v\n", a)
 			if a.Type == 0 || a.Type == 2 || a.Floor == 0 {

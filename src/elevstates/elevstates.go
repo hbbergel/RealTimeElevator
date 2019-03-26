@@ -13,7 +13,7 @@ type T struct {
 }
 
 
-func ElevStates(local_id string, local_state <-chan types.ElevState, all_states chan<- map[string]types.ElevState, allStatesTx chan<- map[string]types.ElevState ){
+func ElevStates(local_id string, local_state <-chan types.ElevState, all_states chan<- map[string]types.ElevState){
 
 	states := make(map[string]types.ElevState)
 	
@@ -33,7 +33,6 @@ func ElevStates(local_id string, local_state <-chan types.ElevState, all_states 
 				fmt.Printf("[ElevState]: Recieved new local state:\n\t%+v\n", a)
 				states[local_id] = a
 				all_states <- states
-				allStatesTx <- states
 			}
 
 			netSend <- T{a, local_id}
