@@ -192,6 +192,7 @@ func LostPeers(peerUpdateCh <-chan peers.PeerUpdate, allStatesRx <-chan map[stri
                                 fmt.Printf("Sending newOrder %+v\n", types.Button{Floor: f, Type: b})
 								newOrder <- types.Button{Floor: f, Type: b}
 							}
+						
 						}
 					}
 				}
@@ -199,9 +200,3 @@ func LostPeers(peerUpdateCh <-chan peers.PeerUpdate, allStatesRx <-chan map[stri
 		}
 	}
 }
-
-func syncLights(){
-	
-}
-
-

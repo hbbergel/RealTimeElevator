@@ -71,7 +71,7 @@ func main(){
 	allStatesToAssigner     := make(chan map[string]types.ElevState)
 	allStatesToLostPeers    := make(chan map[string]types.ElevState)
 	
-	newOrder := make(chan types.Button, 1000)
+	newOrder := make(chan types.Button, 5000)
 	orderDone := make(chan types.Button)
 	assignedOrder := make(chan types.Order)
 

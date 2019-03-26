@@ -89,6 +89,7 @@ func Fsm_run_elev(newOrder <-chan types.Button, floorReached <-chan int, orderDo
 					fmt.Println("Etasje!!!!")
 					e.State = types.DOOR_OPEN
 					elevio.SetDoorOpenLamp(true)
+					e = ClearAtCurrentFloor(e, func(btn int){ orderDone <- types.Button{e.Floor, btn}})		
 					doorTime.Reset(3*time.Second)
 					//time.Sleep(3*time.Second)
 					local_state <- e
@@ -111,7 +112,6 @@ func Fsm_run_elev(newOrder <-chan types.Button, floorReached <-chan int, orderDo
 				e.State = types.IDLE
 				//fmt.Printf("Matrix,\n\t%+v\n", e.Orders)
 				e = ClearAtCurrentFloor(e, func(btn int){ orderDone <- types.Button{e.Floor, btn}})		
-				
 				dir := ChooseDirection(e)
 				elevio.SetMotorDirection(dir)
 				e.Direction = dir

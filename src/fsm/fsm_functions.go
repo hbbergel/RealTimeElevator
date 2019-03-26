@@ -101,7 +101,36 @@ func ShouldStop(e types.ElevState) bool {
 
 
 func ClearAtCurrentFloor(e types.ElevState, onClearedOrder func(btnType int)) types.ElevState{
-    for btn := 0; btn <= 2; btn++ {
+   /* if e.Direction == elevio.MD_Down{
+        for btn := 0; btn <= 2; btn += 2 {
+            if e.Orders[e.Floor][btn] != 0 {
+                e.Orders[e.Floor][btn] = 0
+                if onClearedOrder != nil {
+                    onClearedOrder(btn)
+                }
+            }
+        }
+    } else if e.Direction == elevio.MD_Up {
+        for btn := 1; btn <= 2; btn ++{
+            if e.Orders[e.Floor][btn] != 0 {
+                e.Orders[e.Floor][btn] = 0
+                if onClearedOrder != nil {
+                    onClearedOrder(btn)
+                }
+            }
+        }
+    } else if e.Direction == elevio.MD_Stop {
+        for btn := 0; btn <= 2; btn ++{
+            if e.Orders[e.Floor][btn] != 0 {
+                e.Orders[e.Floor][btn] = 0
+                if onClearedOrder != nil {
+                    onClearedOrder(btn)
+                }
+            }
+        }
+    }
+    */
+    for btn := 0; btn <= 2; btn ++{
         if e.Orders[e.Floor][btn] != 0 {
             e.Orders[e.Floor][btn] = 0
             if onClearedOrder != nil {
