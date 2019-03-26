@@ -129,45 +129,36 @@ func timeToIdle(state types.ElevState, btn elevio.ButtonEvent) int {
         if(state.Direction == elevio.MD_Stop){
 			distance := closestToOrder(btn, state)
 			duration += distance
-            return duration;
         }
         
 	case types.MOVING:
         duration += travelTime/2
-		state.Floor += convertDirToInt(state)
-		return duration
+		state.Floor += int(state.Direction)
 
         
 	case types.DOOR_OPEN:
 		duration -= doorOpenTime/2
-		return duration
     }
 
 
     for {
+        fmt.Printf("TTI Iter : %+v\n", state)
         if(fsm.ShouldStop(state)){
-           // e := fsm.ClearAtCurrentFloor(state, "")
+            fmt.Printf(" stopping at floor : %+v\n", state.Floor)
+            state = fsm.ClearAtCurrentFloor(state, nil)
+            fmt.Printf(" after clearing: %+v\n", state)
             duration += doorOpenTime
             state.Direction = fsm.ChooseDirection(state)
+            fmt.Printf(" new direction: %+v\n", state.Direction)
             if(state.Direction == elevio.MD_Stop){
                 return duration
             }
         }
-        state.Floor += convertDirToInt(state)
+        state.Floor += int(state.Direction)
 		duration += travelTime
-		return duration
     }
 }
 
-func convertDirToInt(state types.ElevState) int {
-	if state.Direction == elevio.MD_Up {
-		return 1
-	} else if state.Direction == elevio.MD_Down {
-		return -1
-	} else {
-		return 0
-	}
-}
 
 func closestToOrder(btn elevio.ButtonEvent, state types.ElevState) int {
 	

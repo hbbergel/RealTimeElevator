@@ -16,6 +16,7 @@ func ChooseDirection(e types.ElevState)elevio.MotorDirection{
         } else {
             return elevio.MD_Stop
         }
+        
     case elevio.MD_Down:
         if requests_below(e){
             return elevio.MD_Down
@@ -23,8 +24,7 @@ func ChooseDirection(e types.ElevState)elevio.MotorDirection{
             return elevio.MD_Up
         } else {
             return elevio.MD_Stop
-        }
-        
+        }        
 	
     case elevio.MD_Stop:
 		if requests_below(e) {
@@ -44,7 +44,7 @@ func ChooseDirection(e types.ElevState)elevio.MotorDirection{
 func requests_above(e types.ElevState)bool{
     for f := e.Floor+1; f < types.N_FLOORS; f++ {
         for btn := 0; btn < types.N_BUTTONS; btn++ {
-            if e.Orders[f][btn] == 1{
+            if e.Orders[f][btn] != 0 {
                 return true
             }
         }
@@ -56,7 +56,7 @@ func requests_above(e types.ElevState)bool{
 func requests_below(e types.ElevState) bool{
     for f := 0; f < e.Floor; f++{
         for btn := 0; btn < types.N_BUTTONS; btn++{
-            if e.Orders[f][btn] == 1{
+            if e.Orders[f][btn] != 0 {
                 return true
             }
         }
@@ -68,7 +68,7 @@ func requests_below(e types.ElevState) bool{
 func ShouldStop(e types.ElevState) bool {
     switch (e.Direction){
     case elevio.MD_Down:
-        if e.Orders[e.Floor][1] == 1 || e.Orders[e.Floor][2] == 1 {
+        if e.Orders[e.Floor][1] != 0 || e.Orders[e.Floor][2] != 0 {
             return true
         } else if !requests_below(e) {
             return true
@@ -78,7 +78,7 @@ func ShouldStop(e types.ElevState) bool {
             return false
         }
     case elevio.MD_Up:
-        if e.Orders[e.Floor][0] == 1 || e.Orders[e.Floor][2] == 1 {
+        if e.Orders[e.Floor][0] != 0 || e.Orders[e.Floor][2] != 0 {
             return true
         } else if !requests_above(e) {
             return true
@@ -88,7 +88,7 @@ func ShouldStop(e types.ElevState) bool {
             return false
         }
     case elevio.MD_Stop:
-        if ((e.Orders[e.Floor][0] == 1) || (e.Orders[e.Floor][1] == 1) || (e.Orders[e.Floor][2] == 1)){
+        if ((e.Orders[e.Floor][0] != 0) || (e.Orders[e.Floor][1] != 0) || (e.Orders[e.Floor][2] != 0)){
             return true
         } else{
             return false
@@ -101,35 +101,14 @@ func ShouldStop(e types.ElevState) bool {
 
 
 func ClearAtCurrentFloor(e types.ElevState, onClearedOrder func(btnType int)) types.ElevState{
-    /*switch(e.Direction){
-    case elevio.MD_Up:
-        for btn := 0; btn <= 2; btn +=2 {
-            if e.Orders[e.Floor][btn] == 1 {
-                e.Orders[e.Floor][btn] = 0
-                onClearedOrder(btn)
-            } else if e.Floor == 3 {
-                e.Orders[e.Floor][1] = 0
+    for btn := 0; btn <= 2; btn++ {
+        if e.Orders[e.Floor][btn] != 0 {
+            e.Orders[e.Floor][btn] = 0
+            if onClearedOrder != nil {
                 onClearedOrder(btn)
             }
         }
-    case elevio.MD_Down:
-        for btn := 0; btn <= 1; btn++ {
-            if e.Orders[e.Floor][btn] == 1 {
-                e.Orders[e.Floor][btn] = 0
-                onClearedOrder(btn)
-            }else if e.Floor == 0 {
-                e.Orders[e.Floor][0] = 0
-                onClearedOrder(btn)
-            }
-        }
-    case elevio.MD_Stop:*/
-        for btn := 0; btn <= 2; btn++ {
-            if e.Orders[e.Floor][btn] == 1 {
-                e.Orders[e.Floor][btn] = 0
-                onClearedOrder(btn)
-            }
-        }
-    //}
+    }
     fmt.Printf("Matrix in fsm,\n\t%+v\n", e.Orders)
     return e
 }

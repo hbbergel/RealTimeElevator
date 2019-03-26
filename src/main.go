@@ -119,6 +119,7 @@ func main(){
     
     
     for {
+        select {
             
 		case p := <-peerUpdateCh:
 			fmt.Printf("Peer update:\n")
