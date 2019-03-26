@@ -68,27 +68,23 @@ func requests_below(e types.ElevState) bool{
 func ShouldStop(e types.ElevState) bool {
     switch (e.Direction){
     case elevio.MD_Down:
-        if e.Orders[e.Floor][0] == 1 {
-            return true
-        } else if e.Orders[e.Floor][2] == 1 {
+        if e.Orders[e.Floor][1] == 1 || e.Orders[e.Floor][2] == 1 {
             return true
         } else if !requests_below(e) {
             return true
         } else if e.Floor == 0  {
             return true
-        } else {
+        }else {
             return false
         }
     case elevio.MD_Up:
-        if e.Orders[e.Floor][1] == 1 {
-            return true
-        } else if e.Orders[e.Floor][2] == 1 {
+        if e.Orders[e.Floor][0] == 1 || e.Orders[e.Floor][2] == 1 {
             return true
         } else if !requests_above(e) {
             return true
         } else if e.Floor == 3  {
             return true
-        }else {
+        } else {
             return false
         }
     case elevio.MD_Stop:
@@ -105,12 +101,35 @@ func ShouldStop(e types.ElevState) bool {
 
 
 func ClearAtCurrentFloor(e types.ElevState, onClearedOrder func(btnType int)) types.ElevState{
-	for btn := 0; btn <= 2; btn++ {
-		if e.Orders[e.Floor][btn] == 1 {
-			e.Orders[e.Floor][btn] = 0
-            onClearedOrder(btn)
-		}
-    }
+    /*switch(e.Direction){
+    case elevio.MD_Up:
+        for btn := 0; btn <= 2; btn +=2 {
+            if e.Orders[e.Floor][btn] == 1 {
+                e.Orders[e.Floor][btn] = 0
+                onClearedOrder(btn)
+            } else if e.Floor == 3 {
+                e.Orders[e.Floor][1] = 0
+                onClearedOrder(btn)
+            }
+        }
+    case elevio.MD_Down:
+        for btn := 0; btn <= 1; btn++ {
+            if e.Orders[e.Floor][btn] == 1 {
+                e.Orders[e.Floor][btn] = 0
+                onClearedOrder(btn)
+            }else if e.Floor == 0 {
+                e.Orders[e.Floor][0] = 0
+                onClearedOrder(btn)
+            }
+        }
+    case elevio.MD_Stop:*/
+        for btn := 0; btn <= 2; btn++ {
+            if e.Orders[e.Floor][btn] == 1 {
+                e.Orders[e.Floor][btn] = 0
+                onClearedOrder(btn)
+            }
+        }
+    //}
     fmt.Printf("Matrix in fsm,\n\t%+v\n", e.Orders)
     return e
 }

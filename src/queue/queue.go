@@ -62,15 +62,17 @@ func Distributor(localID string, assignedOrder <-chan types.Order, localOrder ch
 func Assigner(localID string, buttonPressed <-chan elevio.ButtonEvent, allStates <-chan map[string]types.ElevState, peerList <-chan []string, assignedOrder chan types.Order){
 	var peers []string
 	var states map[string]types.ElevState
-	
+
 	for{
 		select{
 		case peers = <- peerList:
 		
 		case states = <- allStates:
 
-		case a := <- buttonPressed:
+		case a := <- buttonPressed:	
+
 			aliveStates := make(map[string]types.ElevState)
+			fmt.Println("alivestates: %+v\n", aliveStates)
 
 			for _, id := range(peers) {
 				if state, ok := states[id]; ok {
@@ -91,6 +93,8 @@ func Assigner(localID string, buttonPressed <-chan elevio.ButtonEvent, allStates
 func findBest(btn elevio.ButtonEvent, states map[string]types.ElevState, localID string) string {
 	bestCost := math.MaxInt64
 	bestID := localID
+
+
 	for id, state := range(states) {
 		state_cpy := state	// copy necessary??
 		state_cpy.Orders[btn.Floor][btn.Button] = 2
@@ -100,6 +104,7 @@ func findBest(btn elevio.ButtonEvent, states map[string]types.ElevState, localID
 			bestID = id
 		}
 	}
+
 	return bestID
 }
 
@@ -107,8 +112,8 @@ func findBest(btn elevio.ButtonEvent, states map[string]types.ElevState, localID
 func timeToIdle(state types.ElevState) int {
 	const travelTime = 2500
 	const doorOpenTime = 3000
-    duration := 0
-    
+	duration := 0
+
     switch state.State {
     case types.IDLE:
         state.Direction = fsm.ChooseDirection(state)
@@ -116,18 +121,21 @@ func timeToIdle(state types.ElevState) int {
             return duration;
         }
         
-    case types.MOVING:
+	case types.MOVING:
         duration += travelTime/2
-        state.Floor += convertDirToInt(state)
+		state.Floor += convertDirToInt(state)
+		return duration
+
         
-    case types.DOOR_OPEN:
-        duration -= doorOpenTime/2
+	case types.DOOR_OPEN:
+		duration -= doorOpenTime/2
+		return duration
     }
 
 
     for {
         if(fsm.ShouldStop(state)){
-            //fsm.ClearAtCurrentFloor(state, nil)
+           // e := fsm.ClearAtCurrentFloor(state, "")
             duration += doorOpenTime
             state.Direction = fsm.ChooseDirection(state)
             if(state.Direction == elevio.MD_Stop){
@@ -135,7 +143,8 @@ func timeToIdle(state types.ElevState) int {
             }
         }
         state.Floor += convertDirToInt(state)
-        duration += travelTime
+		duration += travelTime
+		return duration
     }
 }
 

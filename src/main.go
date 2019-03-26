@@ -6,7 +6,7 @@ import "fmt"
 import "os"
 import "reflect"
 
-// import "./bcast"
+import "./bcast"
 import "./elevio"
 import "./elevstates"
 import "./fsm"
@@ -38,7 +38,7 @@ func main(){
 	
 	}
 	if driver_port == "" {
-		driver_port = "15657"
+		driver_port = "20025"
 	}
 
 	fmt.Println(localip.LocalIP())
@@ -46,11 +46,16 @@ func main(){
 	elevio.Init("localhost:"+driver_port, numFloors)
 	//fmt.Println("Stoplys av")
 
+	
+
 	// Channels
 
 	peerUpdateCh := make(chan peers.PeerUpdate)
 	peerTxEnable := make(chan bool)
 	peerList := make(chan []string)
+
+	orderDoneTx := make(chan types.Button)
+	orderDoneRx := make(chan types.Button)
 
 	// assignedOrder_netTx := make(chan types.Order)
 	// assignedOrder_netRx := make(chan types.Order)
@@ -74,8 +79,13 @@ func main(){
 
 	//Goroutines
 
-	go peers.Transmitter(20001, id, peerTxEnable)
-	go peers.Receiver(20001, peerUpdateCh)
+	go fsm.Fsm_Init(localState)
+
+	go peers.Transmitter(20025, id, peerTxEnable)
+	go peers.Receiver(20025, peerUpdateCh)
+
+	go bcast.Transmitter(15000, orderDoneTx)
+	go bcast.Receiver(15000, orderDoneRx)
 
 	// go bcast.Transmitter(15001, assignedOrder_netTx)
 	// go bcast.Receiver(15001, assignedOrder_netRx)
@@ -93,7 +103,7 @@ func main(){
 	go queue.Distributor(id, assignedOrder, newOrder)
 
 	go fsm.Fsm_run_elev(newOrder, drv_floors, orderDone, localState)
-			
+	
     
     
     for {
@@ -110,13 +120,22 @@ func main(){
 
 		case a := <- orderDone:
 			fmt.Printf("Order done: %+v\n", a)
-            if a.Type == 0 || a.Type == 2 {
+			if a.Type == 0 || a.Type == 2 || a.Floor == 0 {
 				elevio.SetButtonLamp(0, a.Floor, false)
 				elevio.SetButtonLamp(2, a.Floor, false)
-			} else if a.Type == 1 || a.Type == 2 {
-			elevio.SetButtonLamp(2, a.Floor, false)
-			elevio.SetButtonLamp(1, a.Floor, false)
+			} else if a.Type == 1 || a.Type == 2 || a.Floor == 3 {
+				elevio.SetButtonLamp(2, a.Floor, false)
+				elevio.SetButtonLamp(1, a.Floor, false)
 			}
+			orderDoneTx <- a
+		case a := <- orderDoneRx:
+			if a.Type == 0 || a.Floor == 0 {
+				elevio.SetButtonLamp(0, a.Floor, false)
+			} else if a.Type == 1 || a.Floor == 3 {
+				elevio.SetButtonLamp(1, a.Floor, false)
+			}
+
+
 
 			//TODO: remove the orderDone for something useful
 
