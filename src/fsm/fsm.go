@@ -23,8 +23,6 @@ func Fsm_run_elev(newOrder <-chan types.Button, floorReached <-chan int, orderDo
 		case newOrder := <- newOrder:
 
 			e.Orders[newOrder.Floor][newOrder.Type] = 1
-			
-
 			local_state <- e
 			//fmt.Printf("[ElevState]: Order:\n\t%+v\n", e.Orders)
 
@@ -111,16 +109,25 @@ func Fsm_run_elev(newOrder <-chan types.Button, floorReached <-chan int, orderDo
 	}
 }
 
-func Fsm_Init(local_state chan<- types.ElevState){
+func Fsm_Init(local_id string, local_state chan<- types.ElevState, allStates <-chan map[string]ElevState) {
 	elevio.SetMotorDirection(elevio.MD_Up)
 
-	e := types.ElevState{
-		Floor: 0,
-		Direction: elevio.MD_Up,
-		State: types.INIT,
-		Orders: [types.N_FLOORS][types.N_BUTTONS]int {},
+	if val, ok := allStates[local_id]; ok {
+		e := allStates[local_id]
+		local_state <- e
+		
+	} else {
+		e := types.ElevState{
+			Floor: 0,
+			Direction: elevio.MD_Up,
+			State: types.INIT,
+			Orders: [types.N_FLOORS][types.N_BUTTONS]int {},
+		}
+		local_state <- e
 	}
-	local_state <- e
+
+	
 }
+
 
 

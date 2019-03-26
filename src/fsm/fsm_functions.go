@@ -133,3 +133,4 @@ func ClearAtCurrentFloor(e types.ElevState, onClearedOrder func(btnType int)) ty
     fmt.Printf("Matrix in fsm,\n\t%+v\n", e.Orders)
     return e
 }
+

@@ -4,9 +4,10 @@ import "../bcast"
 import "../elevio"	
 import "../types"
 import "../fsm"
+import "../peers"
 import "math"
 import "fmt"
-//import "time"
+import "time"
 
 type ElevQueue struct {
 	QueueSystem [4][4]int
@@ -28,27 +29,35 @@ func Distributor(localID string, assignedOrder <-chan types.Order, localOrder ch
 	for{
 		select{
 		case a := <- assignedOrder:
-			netSend <- a
-			//ticker := time.NewTicker(100*time.Millisecond)
+			if a.Button != 2{
+				//netSend <- a
+
+			ticker := time.NewTicker(time.Millisecond)
 			
-			/*go func() { 
+			
+			go func() { 
 				for{
 					select{
 					case <- ticker.C:
 						netSend <- a
+						fmt.Println("Ticker")
+						ticker.Stop()
 					}
 				}
-			}()*/
+			}()
+		}
 
 
-			if a.AssignedTo == localID {
+			if a.AssignedTo == localID || a.Button == 2 {
 				localOrder <- types.Button{Floor:a.Floor, Type:int(a.Button)}
-				fmt.Println("Ticker")
+				
+				elevio.SetButtonLamp(a.Button, a.Floor, true)
 			}
 
-			fmt.Printf("Local assigned: %+v\n", a)
+			//fmt.Printf("Local assigned: %+v\n", a)
 		case a := <- netRecv:
 			elevio.SetButtonLamp(a.Button, a.Floor, true)
+			fmt.Println("Motatt bestilling fra nett")
 			if a.AssignedTo == localID {
 				localOrder <- types.Button{Floor:a.Floor, Type:int(a.Button)}
 			}
@@ -81,11 +90,10 @@ func Assigner(localID string, buttonPressed <-chan elevio.ButtonEvent, allStates
 			}
 			bestID := findBest(a, aliveStates, localID)
 			fmt.Println(bestID)
-			 
+				
 			b := types.Order{a.Floor, a.Button, bestID}
 			fmt.Printf("Assigned order: %+v\n", b)
 			assignedOrder <- b
-
 		}
 	}
 }
@@ -98,7 +106,7 @@ func findBest(btn elevio.ButtonEvent, states map[string]types.ElevState, localID
 	for id, state := range(states) {
 		state_cpy := state	// copy necessary??
 		state_cpy.Orders[btn.Floor][btn.Button] = 2
-		c := timeToIdle(state_cpy)
+		c := timeToIdle(state_cpy, btn)
 		if c < bestCost {
 			bestCost = c
 			bestID = id
@@ -109,7 +117,7 @@ func findBest(btn elevio.ButtonEvent, states map[string]types.ElevState, localID
 }
 
 
-func timeToIdle(state types.ElevState) int {
+func timeToIdle(state types.ElevState, btn elevio.ButtonEvent) int {
 	const travelTime = 2500
 	const doorOpenTime = 3000
 	duration := 0
@@ -118,6 +126,8 @@ func timeToIdle(state types.ElevState) int {
     case types.IDLE:
         state.Direction = fsm.ChooseDirection(state)
         if(state.Direction == elevio.MD_Stop){
+			distance := closestToOrder(btn, state)
+			duration += distance
             return duration;
         }
         
@@ -156,6 +166,20 @@ func convertDirToInt(state types.ElevState) int {
 	} else {
 		return 0
 	}
+}
+
+func closestToOrder(btn elevio.ButtonEvent, state types.ElevState) int {
+	
+	distance := btn.Floor - state.Floor
+	if distance < 0 {
+		return -distance
+	} else {
+		return distance
+	}
+}
+
+go queue.LostPeers(peerUpdateCh <-chan peers.PeerUpdate) {
+	
 }
 
 

@@ -5,6 +5,7 @@ import "flag"
 import "fmt"
 import "os"
 import "reflect"
+import "time"
 
 import "./bcast"
 import "./elevio"
@@ -57,6 +58,9 @@ func main(){
 	orderDoneTx := make(chan types.Button)
 	orderDoneRx := make(chan types.Button)
 
+	allStatesTx := make(chan map[string]types.ElevState)
+	allStatesRx := make(chan map[string]types.ElevState)
+
 	// assignedOrder_netTx := make(chan types.Order)
 	// assignedOrder_netRx := make(chan types.Order)
 
@@ -79,13 +83,18 @@ func main(){
 
 	//Goroutines
 
-	go fsm.Fsm_Init(localState)
+	go fsm.Fsm_Init(localState, allStatesRx)
 
 	go peers.Transmitter(20025, id, peerTxEnable)
 	go peers.Receiver(20025, peerUpdateCh)
 
 	go bcast.Transmitter(15000, orderDoneTx)
 	go bcast.Receiver(15000, orderDoneRx)
+
+	go bcast.Transmitter(15050, allStatesTx)
+	go bcast.Receiver(15050, allStatesRx)
+
+
 
 	// go bcast.Transmitter(15001, assignedOrder_netTx)
 	// go bcast.Receiver(15001, assignedOrder_netRx)
@@ -100,9 +109,12 @@ func main(){
     //   Sets all lights: hall for all elevs, cab for us 
 
 	go queue.Assigner(id, drv_buttons, allStates, peerList, assignedOrder)
+	go queue.LostPeers(peerUpdateCh)
 	go queue.Distributor(id, assignedOrder, newOrder)
 
 	go fsm.Fsm_run_elev(newOrder, drv_floors, orderDone, localState)
+
+	//go ReInitializing()
 	
     
     
@@ -127,17 +139,22 @@ func main(){
 				elevio.SetButtonLamp(2, a.Floor, false)
 				elevio.SetButtonLamp(1, a.Floor, false)
 			}
-			orderDoneTx <- a
+			ticker := time.NewTimer(time.Millisecond)
+
+			go func() {
+				for{
+					select{
+					case <- ticker.C:
+						orderDoneTx <- a
+						ticker.Stop()
+					}
+				}
+			}()	
 		case a := <- orderDoneRx:
-			if a.Type == 0 || a.Floor == 0 {
-				elevio.SetButtonLamp(0, a.Floor, false)
-			} else if a.Type == 1 || a.Floor == 3 {
-				elevio.SetButtonLamp(1, a.Floor, false)
-			}
+			ClearHallLights(a)
 
+	
 
-
-			//TODO: remove the orderDone for something useful
 
 
 
@@ -145,6 +162,7 @@ func main(){
 	}
 	    
 }
+
 
 /*
 Repeats values sent on an input channel to several output channels
@@ -181,4 +199,14 @@ func Repeater(ch_in interface{}, dup_fn interface{}, chs_out ...interface{}) {
 			reflect.ValueOf(c).Send(v2)
 		}
 	}
+}
+
+
+func ClearHallLights(a types.Button)  {
+	elevio.SetButtonLamp(elevio.ButtonType(a.Type), a.Floor, false)
+	// if a.Type == 0 || a.Floor == 0 {
+    //     elevio.SetButtonLamp(0, a.Floor, false)
+	// } else if a.Type == 1 || a.Floor == 3 {
+    //     elevio.SetButtonLamp(1, a.Floor, false)
+    // } 
 }
