@@ -9,6 +9,7 @@ import "math"
 import "fmt"
 import "time"
 
+
 type ElevQueue struct {
 	QueueSystem [4][4]int
 	CabCall [4]int
@@ -57,7 +58,7 @@ func Distributor(localID string, assignedOrder <-chan types.Order, localOrder ch
 			//fmt.Printf("Local assigned: %+v\n", a)
 		case a := <- netRecv:
 			elevio.SetButtonLamp(a.Button, a.Floor, true)
-			fmt.Println("Motatt bestilling fra nett")
+			//fmt.Println("Motatt bestilling fra nett")
 			if a.AssignedTo == localID {
 				localOrder <- types.Button{Floor:a.Floor, Type:int(a.Button)}
 			}
@@ -178,12 +179,34 @@ func closestToOrder(btn elevio.ButtonEvent, state types.ElevState) int {
 	}
 }
 
-go queue.LostPeers(peerUpdateCh <-chan peers.PeerUpdate) {
+func LostPeers(peerUpdateCh <-chan peers.PeerUpdate, allStatesRx <-chan map[string]types.ElevState, newOrder chan<- types.Button) {
 	
+	var states map[string]types.ElevState
+	states = <- allStatesRx
+
+	for {
+		select{
+		case a := <- peerUpdateCh:
+			lost_id := a.Lost
+			if len(lost_id) != 0 {
+				fmt.Printf("Lost Node")
+				for i, _ := range lost_id {
+					orders := states[lost_id[i]].Orders
+					for j := 0; j <=3; j++{
+						for k := 0; k <= 1; k++{
+							if orders[j][k] != 0 {
+								newOrder <- types.Button{Floor: j, Type: k}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
 }
 
-
-
-
+func syncLights(){
+	
+}
 
 

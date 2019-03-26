@@ -62,6 +62,7 @@ func Fsm_run_elev(newOrder <-chan types.Button, floorReached <-chan int, orderDo
 			}
 		
 		case floorReached := <- floorReached:
+			fmt.Println("IKKE INIIT")
 			elevio.SetFloorIndicator(floorReached)
 			e.Floor = floorReached
 			local_state <- e
@@ -109,11 +110,48 @@ func Fsm_run_elev(newOrder <-chan types.Button, floorReached <-chan int, orderDo
 	}
 }
 
-func Fsm_Init(local_id string, local_state chan<- types.ElevState, allStates <-chan map[string]ElevState) {
+func Fsm_Init(local_id string, local_state chan<- types.ElevState, allStatesRx <-chan map[string]types.ElevState, peerList <-chan []string) {
 	elevio.SetMotorDirection(elevio.MD_Up)
+	
+	select {
+	case states, ok := <- allStatesRx:
+		
+		if ok {
+			
+			peerID := <- peerList
+			statesCpy := states[peerID[0]] 
+			e := states[local_id]
+			for floor := 0; floor <=3; floor++{
+				fmt.Printf("peer")
+				for btn := 0; btn <= 1; btn++{
+					if statesCpy.Orders[floor][btn] == 1 {
+						elevio.SetButtonLamp(elevio.ButtonType(btn), floor, true)
+					} else if statesCpy.Orders[floor][btn] == 0 {
+						elevio.SetButtonLamp(elevio.ButtonType(btn), floor, false)
+					}
+					e.Orders[floor][btn] = 0
+				}
+			}
+			local_state <- e
+		}
+	default: 
+		
+		e := types.ElevState{
+			Floor: 0,
+			Direction: elevio.MD_Up,
+			State: types.INIT,
+			Orders: [types.N_FLOORS][types.N_BUTTONS]int {},
+		}
+		local_state <- e
+		
 
-	if val, ok := allStates[local_id]; ok {
-		e := allStates[local_id]
+	}
+	
+	/*
+	states := <- allStatesRx
+
+	if _, ok := states[local_id]; ok {
+		e := states[local_id]
 		local_state <- e
 		
 	} else {
@@ -123,10 +161,11 @@ func Fsm_Init(local_id string, local_state chan<- types.ElevState, allStates <-c
 			State: types.INIT,
 			Orders: [types.N_FLOORS][types.N_BUTTONS]int {},
 		}
+
 		local_state <- e
 	}
 
-	
+	*/
 }
 
 

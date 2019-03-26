@@ -83,7 +83,6 @@ func main(){
 
 	//Goroutines
 
-	go fsm.Fsm_Init(localState, allStatesRx)
 
 	go peers.Transmitter(20025, id, peerTxEnable)
 	go peers.Receiver(20025, peerUpdateCh)
@@ -102,17 +101,19 @@ func main(){
 	go elevio.PollButtons(drv_buttons)
 	go elevio.PollFloorSensor(drv_floors)
 
-	go elevstates.ElevStates(id, localState, allStates)
+	go elevstates.ElevStates(id, localState, allStates, allStatesTx)
 
 	// TODO: Create lights goroutine here:
     //   Takes allStates, but this must be repeated (goes to lights and queue.Asssigner) 
     //   Sets all lights: hall for all elevs, cab for us 
 
 	go queue.Assigner(id, drv_buttons, allStates, peerList, assignedOrder)
-	go queue.LostPeers(peerUpdateCh)
+	go queue.LostPeers(peerUpdateCh, allStatesRx, newOrder)
 	go queue.Distributor(id, assignedOrder, newOrder)
 
 	go fsm.Fsm_run_elev(newOrder, drv_floors, orderDone, localState)
+	go fsm.Fsm_Init(id, localState, allStatesRx, peerList)
+
 
 	//go ReInitializing()
 	
