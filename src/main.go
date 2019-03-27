@@ -111,9 +111,9 @@ func main(){
 	go Repeater(localState, nil, localStateToFsm)
     
 	go queue.Assigner(id, drv_buttons, allStatesToAssigner, peerUpdateToAssigner, assignedOrder)
-	go queue.LostPeers(peerUpdateToLostPeers, allStatesToLostPeers, newOrder)
+	go queue.LostPeers( peerUpdateToLostPeers, allStatesToLostPeers, newOrder)
 	go queue.Distributor(id, assignedOrder, newOrder)
-	go fsm.WriteCabOrdersToFile(localStateToFsm)
+	go fsm.WriteCabOrdersToFile(localStateToFsm, newOrder)
 
 	go fsm.Fsm_run_elev(newOrder, drv_floors, orderDone, localState)
 

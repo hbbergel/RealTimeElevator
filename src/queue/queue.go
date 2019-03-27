@@ -174,12 +174,9 @@ func closestToOrder(btn elevio.ButtonEvent, state types.ElevState) int {
 func LostPeers(peerUpdateCh <-chan peers.PeerUpdate, allStatesRx <-chan map[string]types.ElevState, newOrder chan<- types.Button) {
 	
 	var states map[string]types.ElevState
-	
-
 	for {
 		select{
-        case states = <- allStatesRx:
-            
+		case states = <- allStatesRx:
 		case a := <- peerUpdateCh:
 			lost_id := a.Lost
 			if len(lost_id) != 0 {

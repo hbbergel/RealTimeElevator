@@ -32,20 +32,12 @@ func Fsm_run_elev(newOrder <-chan types.Button, floorReached <-chan int, orderDo
 	}
 	
 	
-	var cabOrders [4]bool
-	str, _ := ioutil.ReadFile("cabOrderBackup.json")		
-	fmt.Printf("Reading from file")
-	json.Unmarshal(str, &cabOrders)
-	for f := 0; f < 4; f++ {
-		if cabOrders[f] {
-			e.Orders[f][2] = 1
-			elevio.SetButtonLamp(2, f, true)
-			e.State = types.INIT
-		}
-	}
+	
 
 	doorTime := time.NewTimer(3*time.Second)
 	doorTime.Stop()
+	//idleTime := time.NewTimer(10*time.Second)
+	
 
 	
 	fmt.Printf("Fsm has started")
@@ -92,6 +84,7 @@ func Fsm_run_elev(newOrder <-chan types.Button, floorReached <-chan int, orderDo
 			//case types.MOTOR_STOP:
 				
 			}
+			//idleTime.Reset(10*time.Second)
 		
 		case floorReached := <- floorReached:
 			fmt.Println("Floor Arrival")
@@ -113,6 +106,16 @@ func Fsm_run_elev(newOrder <-chan types.Button, floorReached <-chan int, orderDo
 					local_state <- e
 				}
 			case types.IDLE:
+				if ShouldStop(e) {
+					elevio.SetMotorDirection(0)
+					fmt.Println("Etasje!!!!")
+					e.State = types.DOOR_OPEN
+					elevio.SetDoorOpenLamp(true)
+					e = ClearAtCurrentFloor(e, func(btn int){ orderDone <- types.Button{e.Floor, btn}})		
+					doorTime.Reset(3*time.Second)
+					//time.Sleep(3*time.Second)
+					local_state <- e
+				}
 			case types.INIT:
 				elevio.SetMotorDirection(0)
 				e.State = types.IDLE
@@ -121,6 +124,7 @@ func Fsm_run_elev(newOrder <-chan types.Button, floorReached <-chan int, orderDo
 				local_state <- e
 				fmt.Println("Initialisert")
 			}
+			//idleTime.Reset(10*time.Second)
 		case <- doorTime.C:
 			
 			switch e.State {
@@ -137,12 +141,25 @@ func Fsm_run_elev(newOrder <-chan types.Button, floorReached <-chan int, orderDo
 					e.State = types.MOVING
 				}
 				local_state <- e
+				//idleTime.Reset(10*time.Second)
+
 			}
 		}
 	}
 }
 
-func WriteCabOrdersToFile(localStateToFsm <-chan types.ElevState) {
+func WriteCabOrdersToFile(localStateToFsm <-chan types.ElevState, newOrder chan<- types.Button) {
+	var cabOrders [4]bool
+	str, _ := ioutil.ReadFile("cabOrderBackup.json")		
+	fmt.Printf("Reading from file")
+	json.Unmarshal(str, &cabOrders)
+	for f := 0; f < 4; f++ {
+		if cabOrders[f] {
+			elevio.SetButtonLamp(2, f, true)
+			newOrder <- types.Button{f, 2}
+		}
+	}
+
 	for{
 		fmt.Printf("in for-loop")
 		state := <- localStateToFsm
